@@ -9,8 +9,9 @@ def process(input, output):
     ## Read
     img = cv2.imread(input)
     if not img is None:
+        blur = cv2.blur(img, (5, 5))
         ## convert to hsv
-        hsv = cv2.cvtColor(img, cv2.COLOR_BGR2HSV)
+        hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
 
         ## mask of green (36,25,25) ~ (86, 255,255)
         # mask = cv2.inRange(hsv, (36, 25, 25), (86, 255,255))
@@ -20,10 +21,10 @@ def process(input, output):
         res = cv2.bitwise_and(img, img, mask=mask)
 
         rgb = cv2.cvtColor(res, cv2.COLOR_HSV2BGR)
-        gray = cv2.cvtColor(res, cv2.COLOR_BGR2GRAY)
-        _, thresh = cv2.threshold(gray, 10, 255, cv2.THRESH_BINARY)
-        thresh = cv2.erode(thresh, None, iterations=50)
-        thresh = cv2.dilate(thresh, None, iterations=50)
+        gray = cv2.cvtColor(rgb, cv2.COLOR_BGR2GRAY)
+        _, thresh1 = cv2.threshold(gray, 10, 255, cv2.THRESH_BINARY)
+        thresh2 = cv2.erode(thresh1, None, iterations=10)
+        thresh = cv2.dilate(thresh2, None, iterations=10)
         contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         # biggest contour
         cnt = max(contours, key=cv2.contourArea)
@@ -56,6 +57,7 @@ def process(input, output):
 
         ## save
         cv2.imwrite(output, crop)
+        print("saved: " + output)
 
 
 parser = argparse.ArgumentParser(description='Fix tilted images')
@@ -72,6 +74,7 @@ if OUTPUT is None:
 if os.path.isdir(INPUT):
      # iterate through the names of contents of the folder
     for image_file in os.listdir(INPUT):
+        print(image_file)
         # create the full input path and read the file
         input_path = os.path.join(INPUT, image_file)
         output_file = image_file.split(".")[0] + "_cropped.jpg"
