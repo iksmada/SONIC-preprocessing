@@ -14,7 +14,7 @@ def process(input, output):
 
         ## mask of green (36,25,25) ~ (86, 255,255)
         # mask = cv2.inRange(hsv, (36, 25, 25), (86, 255,255))
-        mask = cv2.inRange(hsv, (0, 0, 0), (50, 255, 255))
+        mask = cv2.inRange(hsv, (0, 48, 80), (20, 255, 255))
 
         ## slice the bandids
         res = cv2.bitwise_and(img, img, mask=mask)
@@ -22,8 +22,8 @@ def process(input, output):
         rgb = cv2.cvtColor(res, cv2.COLOR_HSV2BGR)
         gray = cv2.cvtColor(res, cv2.COLOR_BGR2GRAY)
         _, thresh = cv2.threshold(gray, 10, 255, cv2.THRESH_BINARY)
-        thresh = cv2.dilate(thresh, None, iterations=50)
         thresh = cv2.erode(thresh, None, iterations=50)
+        thresh = cv2.dilate(thresh, None, iterations=50)
         contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
         # biggest contour
         cnt = max(contours, key=cv2.contourArea)
@@ -53,7 +53,6 @@ def process(input, output):
                 crop = img[0:y, :]
             else:
                 crop = img[y:, :]
-
 
         ## save
         cv2.imwrite(output, crop)
