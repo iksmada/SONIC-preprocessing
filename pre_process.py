@@ -9,7 +9,7 @@ def process(input, output):
     ## Read
     img = cv2.imread(input)
     if not img is None:
-        blur = cv2.blur(img, (5, 5))
+        blur = cv2.blur(img, (10, 10))
         ## convert to hsv
         hsv = cv2.cvtColor(blur, cv2.COLOR_BGR2HSV)
 
@@ -22,46 +22,47 @@ def process(input, output):
 
         rgb = cv2.cvtColor(res, cv2.COLOR_HSV2BGR)
         gray = cv2.cvtColor(rgb, cv2.COLOR_BGR2GRAY)
-        _, thresh1 = cv2.threshold(gray, 10, 255, cv2.THRESH_BINARY)
-        thresh2 = cv2.erode(thresh1, None, iterations=10)
-        thresh = cv2.dilate(thresh2, None, iterations=10)
+        _, thresh = cv2.threshold(gray, 10, 255, cv2.THRESH_BINARY)
+        thresh = cv2.dilate(thresh, None, iterations=10)
+        thresh = cv2.erode(thresh, None, iterations=15)
         contours, hierarchy = cv2.findContours(thresh, cv2.RETR_EXTERNAL, cv2.CHAIN_APPROX_SIMPLE)
-        # biggest contour
-        cnt = max(contours, key=cv2.contourArea)
-        cv2.drawContours(res, [cnt], -1, (0, 255, 0), 3)
+        if contours:
+            # biggest contour
+            cnt = max(contours, key=cv2.contourArea)
+            cv2.drawContours(res, [cnt], -1, (0, 255, 0), 3)
 
-        x = 0
-        y = 0
-        dist = max(thresh.shape[0], thresh.shape[1])
-        centerx = thresh.shape[1] / 2
-        centery = thresh.shape[0] / 2
-        for point in cnt:
-            dist_p = math.hypot(centery - point[0][1], centerx - point[0][0])
-            if dist_p < dist:
-                dist = dist_p
-                x = point[0][0]
-                y = point[0][1]
+            x = 0
+            y = 0
+            dist = max(thresh.shape[0], thresh.shape[1])
+            centerx = thresh.shape[1] / 2
+            centery = thresh.shape[0] / 2
+            for point in cnt:
+                dist_p = math.hypot(centery - point[0][1], centerx - point[0][0])
+                if dist_p < dist:
+                    dist = dist_p
+                    x = point[0][0]
+                    y = point[0][1]
 
-        dist_x = abs(x - centerx)
-        dist_y = abs(y - centery)
-        if dist_x > dist_y:
-            if x > centerx:
-                crop = img[:, 0:x]
+            dist_x = abs(x - centerx)
+            dist_y = abs(y - centery)
+            if dist_x > dist_y:
+                if x > centerx:
+                    crop = img[:, 0:x]
+                else:
+                    crop = img[:, x:]
             else:
-                crop = img[:, x:]
-        else:
-            if y > centery:
-                crop = img[0:y, :]
-            else:
-                crop = img[y:, :]
+                if y > centery:
+                    crop = img[0:y, :]
+                else:
+                    crop = img[y:, :]
 
-        ## save
-        cv2.imwrite(output, crop)
-        print("saved: " + output)
+            ## save
+            cv2.imwrite(output, crop)
+            print("saved: " + output)
 
 
-parser = argparse.ArgumentParser(description='Fix tilted images')
-parser.add_argument('-i', '--input', type=str, help='Input image path', required=True)
+parser = argparse.ArgumentParser(description='remove stikers')
+parser.add_argument('-i', '--input', type=str, help='Input image file or fodler path', required=True)
 parser.add_argument('-o', '--output', type=str, help='Output image path')
 
 args = vars(parser.parse_args())
